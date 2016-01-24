@@ -13,7 +13,8 @@ defmodule Plug.Adapters.Cowboy.Conn do
     {qs, req}   = Request.qs req
     {peer, req} = Request.peer req
     {remote_ip, _} = peer
-
+    # 使用cowboy做Adapters的时候，req_headers
+    # 会和cowboy_req的headers相同
     %Plug.Conn{
       adapter: {__MODULE__, req},
       host: host,

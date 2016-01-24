@@ -101,6 +101,11 @@ defmodule Plug.Conn do
       Enum.into(~w(each chunk as a word), conn)
 
   """
+  
+  # Custom types defined through @type are exported and available outside 
+  # the module they’re defined in.
+  # @type就是将自定义的类型让模块以外的地方也能看到
+  # 这个和Erlang中的type定义类似。
 
   @type adapter         :: {module, term}
   @type assigns         :: %{atom => any}
@@ -153,7 +158,7 @@ defmodule Plug.Conn do
               secret_key_base: secret_key_base,
               state:           state,
               status:          int_status}
-
+  # 定义Conn的结构体
   defstruct adapter:         {Plug.Conn, nil},
             assigns:         %{},
             before_send:     [],
