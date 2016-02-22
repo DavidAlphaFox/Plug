@@ -108,7 +108,9 @@ defmodule Plug.Builder do
       def init(opts) do
         opts
       end
-
+      ## 这个模块被引入的时候
+      ## 通过__before_compile__将plugs遍历一遍
+      ## 生成一个调用链,供plug_builder_call使用
       def call(conn, opts) do
         plug_builder_call(conn, opts)
       end
@@ -117,7 +119,7 @@ defmodule Plug.Builder do
 
       import Plug.Conn
       import Plug.Builder, only: [plug: 1, plug: 2]
-
+      ## 每次是从前面添加，而不是从后面添加
       Module.register_attribute(__MODULE__, :plugs, accumulate: true)
       @before_compile Plug.Builder
     end
@@ -131,10 +133,12 @@ defmodule Plug.Builder do
     if plugs == [] do
       raise "no plugs have been defined in #{inspect env.module}"
     end
-
+    ## 此时已经完成了pulg的pipeline的编译了
     {conn, body} = Plug.Builder.compile(env, plugs, builder_opts)
-
+    ## 直接增加一个
     quote do
+      ## 此处conn就是一个普通的变量
+      ## 不过这个conn是作为body展开的方法链的参数
       defp plug_builder_call(unquote(conn), _), do: unquote(body)
     end
   end
@@ -186,7 +190,8 @@ defmodule Plug.Builder do
     conn = quote do: conn
     {conn, Enum.reduce(pipeline, conn, &quote_plug(init_plug(&1), &2, env, builder_opts))}
   end
-
+  # 初始化plug的模块或函数
+  # Elixir的模块默认放在Elixir.的命名空间内
   # Initializes the options of a plug at compile time.
   defp init_plug({plug, opts, guards}) do
     case Atom.to_char_list(plug) do
@@ -194,7 +199,7 @@ defmodule Plug.Builder do
       _              -> init_fun_plug(plug, opts, guards)
     end
   end
-
+  # 检查是否导出call/2函数
   defp init_module_plug(plug, opts, guards) do
     initialized_opts = plug.init(opts)
 
@@ -204,7 +209,7 @@ defmodule Plug.Builder do
       raise ArgumentError, message: "#{inspect plug} plug must implement call/2"
     end
   end
-
+  # 直接是函数模式
   defp init_fun_plug(plug, opts, guards) do
     {:function, plug, opts, guards}
   end
@@ -219,13 +224,18 @@ defmodule Plug.Builder do
       :module   -> "expected #{inspect plug}.call/2 to return a Plug.Conn"
       :function -> "expected #{plug}/2 to return a Plug.Conn"
     end <> ", all plugs must receive a connection (conn) and return a connection"
-
+    ## 这个宏是作为返回结果
     quote do
       case unquote(compile_guards(call, guards)) do
         %Plug.Conn{halted: true} = conn ->
           unquote(log_halt(plug_type, plug, env, builder_opts))
           conn
         %Plug.Conn{} = conn ->
+          ## 此处不要被迷惑了
+          ## 这里的acc是一层又一层的case操作
+          ## pipeline是倒序的，也就是最后添加的元素在第一位
+          ## 所以最后的添加的元素展开才是conn
+          ## 否则展开的是case操作，这样保证了从第一个元素一直走到最后一个元素
           unquote(acc)
         _ ->
           raise unquote(error_message)

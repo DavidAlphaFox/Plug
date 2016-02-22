@@ -165,7 +165,12 @@ defmodule Plug.Router do
     quote location: :keep do
       import Plug.Router
       @before_compile Plug.Router
-
+      ## 先展开Router的__using__
+      ## 接着展开Router中的match,get,post等宏
+      ## 然后展开Router的__before_compile__
+      ## 接着展开Builder的__using__
+      ## 接着展开Builder中的 plug宏
+      ## 然后展开Builder的__before_compile__
       use Plug.Builder, unquote(opts)
 
       defp match(conn, _opts) do
