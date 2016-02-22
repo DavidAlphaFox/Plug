@@ -139,6 +139,7 @@ defmodule Plug.Builder do
     end
   end
 
+  ## 向plug中添加响应的plug
   @doc """
   A macro that stores a new plug. `opts` will be passed unchanged to the new
   plug.
