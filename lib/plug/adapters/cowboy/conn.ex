@@ -61,6 +61,7 @@ defmodule Plug.Adapters.Cowboy.Conn do
   end
 
   def read_req_body(req, opts \\ []) do
+    ## 直接获取内容
     Request.body(req, opts)
   end
 

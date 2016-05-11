@@ -147,7 +147,8 @@ defmodule Plug.Parsers do
   defp raise_missing_parsers do
     raise ArgumentError, "Plug.Parsers expects a set of parsers to be given in :parsers"
   end
-
+  ## 保存预先定义的Parser
+  ## 注意一个事情，Plug在Parse完body之后，并不保存实际内容
   defp convert_parsers(parsers) do
     for parser <- parsers do
       case Atom.to_string(parser) do
